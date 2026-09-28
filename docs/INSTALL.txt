@@ -1,0 +1,31 @@
+CONSTANT WATCH 0.1.0 — APPLE SILICON PREVIEW
+
+INSTALL
+1. Drag Constant Watch into Applications.
+2. Eject this disk image and open Constant Watch from Applications.
+3. Follow onboarding to enable Accessibility and Screen Recording for Constant Watch.
+4. Start Ollama. If it is not installed, the app opens its official download page.
+5. Choose Download in the local-model setup step to get Qwen 3.5 0.8B (about 1.04 GB).
+
+Requires an Apple Silicon Mac (M1 or later), macOS 14 or later, and Ollama.
+The Python runtime, service dependencies, OCR helper, and onboarding music are
+inside the app. No Python, Homebrew, uv, Terminal commands, or source checkout
+are needed to run it. The Ollama app and model weights are separate downloads.
+
+This is a preview build. Signing and notarization status are provided alongside
+the disk image. A signature alone does not mean Apple has notarized the build.
+
+YOUR DATA
+Notes and settings stay in ~/Library/Application Support/Constant Watch.
+Closing the window keeps capture running. Quit Constant Watch to stop.
+Pause and app exclusions are available in the app. Screenshots are processed
+in memory for OCR; saved journal content is text. No account is required.
+
+MCP
+Choose Connect with MCP in the app and copy its configuration. Keep the app
+installed at the same location after configuring your MCP client.
+
+UPDATES AND REMOVAL
+Quit Constant Watch before replacing the app with an update. Your notes remain
+in Application Support. Moving the app to Trash does not delete your notes.
+This drag-install package does not automatically register login startup.

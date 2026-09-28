@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Constant Watch — Screen memory</title><link rel="stylesheet" href="/static/style.css"><script src="/static/app.js" defer></script></head>
+<body>
+<dialog id="welcome-dialog" class="welcome-dialog">
+  <div class="welcome-orb" aria-hidden="true"><img src="/static/brand-mark.svg" width="64" height="64" alt=""></div><p class="eyebrow">WELCOME TO CONSTANT WATCH</p><h2>A little less lost context.</h2>
+  <p>Your screen becomes one private, searchable journal. Nothing is captured until you choose to start.</p>
+  <div class="welcome-steps"><p><strong>01 · Your computer. Your control.</strong><br>Visible text is read with accessibility and OCR. Password managers are excluded. Pause anytime.</p><p><strong>02 · A local model.</strong><br>Install and open Ollama, then download Qwen3.5 0.8B here. Your notes stay on this computer.</p><p><strong>03 · One continuous day.</strong><br>Start capture, switch to your work, then return to see your first moment. Closing this window stops capture.</p></div>
+  <div class="welcome-actions"><button id="install-ollama" class="secondary">Get Ollama ↗</button><button id="download-model" class="secondary">Download local model</button></div><p id="setup-model-status" class="muted" role="status"></p>
+  <div class="welcome-actions"><button id="finish-welcome" class="primary">Start my journal →</button><button id="explore-welcome" class="text-button">Explore while paused</button></div>
+</dialog>
+<aside class="sidebar">
+  <a class="brand" href="/journal" aria-label="Constant Watch home"><img src="/static/brand-mark.svg" width="34" height="34" alt=""><span>constant<span class="brand-sub">WATCH / LOCAL MEMORY</span></span></a>
+  <div class="sidebar-label">WORKSPACE</div>
+  <button id="all-apps" class="app-button selected"><span>Daily flow</span><span id="total-count">0</span></button>
+  <div class="sidebar-label app-heading">APPLICATIONS <span id="app-count">0</span></div>
+  <nav id="apps" aria-label="Filter by application"></nav>
+  <p id="no-apps" class="muted sidebar-note">Apps appear here as you work.</p>
+  <div class="sidebar-bottom"><span class="local-dot"></span> Stored on this computer<p>Your screen. Your memory.</p><button id="reopen-welcome" class="text-button">Setup guide ↗</button><button id="open-settings" class="text-button">Capture settings ↗</button></div>
+</aside>
+<main>
+  <header><div class="breadcrumb">YOUR WORKSPACE <span>/</span> SCREEN MEMORY</div><div class="header-actions"><span id="live-state" class="status-pill">Connecting</span><button id="pause" class="secondary">Pause capture</button></div></header>
+  <section class="intro"><div><p class="eyebrow">A RECORD OF WHAT’S ON YOUR SCREEN</p><h1>A little less<br><em>lost context.</em></h1><p class="lede">A running journal of your work, organized by app.<br>Find the detail. Pick up where you left off.</p></div><div class="flow" aria-label="Capture pipeline"><div><span class="flow-symbol">⌘</span><strong>Read</strong><small>Accessibility + OCR</small></div><i>→</i><div><span class="flow-symbol">✳</span><strong>Understand</strong><small>Local 0.8B model</small></div><i>→</i><div><span class="flow-symbol">≡</span><strong>Remember</strong><small>Markdown + MCP</small></div></div></section>
+  <section id="attention" class="notice" hidden><div><strong id="attention-title">Enable screen access</strong><p id="attention-text"></p></div><button id="grant" class="primary">Enable permissions</button></section>
+  <div id="error" role="alert" class="notice error" hidden></div>
+  <section class="journal"><div class="journal-heading"><div><p class="eyebrow">YOUR JOURNAL</p><h2 id="journal-title">All activity</h2></div><button id="export" class="secondary" disabled>Download Markdown ↗</button></div>
+  <div class="filters"><label class="search"><span>⌕</span><input id="search" type="search" placeholder="Search your screen memory…" aria-label="Search screen memory"></label><label class="date-label">Date <input id="date" type="date" aria-label="Filter date"></label><button id="clear-date" class="text-button">All dates</button></div>
+  <div class="journal-meta"><span id="result-count">Loading your journal…</span><span id="last-seen">Waiting for first capture</span></div>
+  <div id="entries" aria-live="polite"></div>
+  <div id="empty" class="empty" hidden><span class="empty-symbol">⌁</span><h3 id="empty-title">Your next thought has a place.</h3><p id="empty-text">Enable Accessibility and Screen Recording to start your journal.<br>New screen text will appear here automatically.</p></div>
+  <button id="load-more" class="secondary more" hidden>Load earlier activity</button>
+  </section>
+  <footer><span id="capture-detail">Checking capture service</span><span id="model-detail">QWEN 3.5 / 0.8B</span></footer>
+</main>
+<dialog id="settings-dialog"><form id="settings-form"><div class="dialog-heading"><h2>Capture settings</h2><button type="button" id="close-settings" class="text-button" aria-label="Close settings">✕</button></div><p class="muted">Keep a local record at your own pace.</p><label>Capture interval (seconds)<input id="interval" type="number" min="3" max="300" required></label><label>Keep notes for (days)<input id="retention" type="number" min="1" max="365" required></label><label>Excluded application IDs<textarea id="exclusions" rows="7" spellcheck="false"></textarea></label><p class="muted small">One ID per line. Windows: windows:chrome.exe; Mac: com.apple.Safari. Exclusions stop future capture. Reducing retention deletes older notes.</p><label>Your notes folder<output id="data-path"></output></label><details><summary>Connect an AI assistant with MCP</summary><p class="muted small">Copy this configuration into your assistant’s MCP settings. It grants read access to your local journal.</p><pre id="mcp-config"></pre><p class="muted small">The assistant’s own handling of your notes depends on the service you use.</p></details><button class="primary save" type="submit">Save settings</button></form></dialog>
+</body></html>

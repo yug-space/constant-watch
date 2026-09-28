@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "constant-watch": {
+      "command": "/absolute/path/to/constant-watch/.venv/bin/constant-watch",
+      "args": ["mcp"]
+    }
+  }
+}

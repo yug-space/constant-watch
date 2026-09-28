@@ -1,0 +1,29 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.egg-info/
+build/
+data/
+.agent-sessions/
+.DS_Store
+dist/
+
+# Local journals, credentials, machine configuration and private verification
+mcp-config.json
+.env
+.env.*
+!.env.example
+*.sqlite3
+*.sqlite3-*
+*.db
+*.pem
+*.p12
+*.pfx
+*.key
+*.log
+docs/LIVE-VERIFICATION.md
+docs/previews/
+docs/PRODUCT.md
+docs/DAYFLOW-COMPARISON.md
+# Hosted checkout has independent history; portable public source is in site/.
+website/
