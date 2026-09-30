@@ -9,6 +9,9 @@ from PyInstaller.utils.hooks import copy_metadata
 datas = []
 binaries = []
 hiddenimports = []
+for package in ['faster_whisper', 'ctranslate2', 'av', 'onnxruntime', 'tokenizers']:
+    d, b, h = collect_all(package)
+    datas += d; binaries += b; hiddenimports += h
 datas += copy_metadata('mcp')
 datas += copy_metadata('fastapi')
 datas += copy_metadata('anyio')

@@ -8,9 +8,14 @@ import sys
 def main():
     os.umask(0o077)
     parser = argparse.ArgumentParser(description="Local screen memory for macOS and Windows")
-    parser.add_argument("command", choices=["serve", "mcp", "doctor", "permissions", "rebuild"])
+    parser.add_argument("command", choices=["serve", "mcp", "doctor", "permissions", "rebuild", "speech-download", "speech-transcribe"])
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--meeting-id", default="")
     args = parser.parse_args()
+    if args.command.startswith("speech-"):
+        from .speech import run
+        run(args.command, args.meeting_id)
+        return
     if args.command == "serve":
         import uvicorn
         from .server import create_app

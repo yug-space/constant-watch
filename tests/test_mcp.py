@@ -16,7 +16,7 @@ async def test_stdio_mcp_handshake_tools_and_resources(tmp_path):
         async with ClientSession(read, write) as session:
             await session.initialize()
             tools = await session.list_tools()
-            assert {t.name for t in tools.tools} == {"list_apps","search_screen_memory","recent_activity","read_app_day","read_day_flow","day_sessions","ask_memory","list_topics","read_topic","read_observation","read_review"}
+            assert {t.name for t in tools.tools} == {"list_apps","search_screen_memory","recent_activity","read_app_day","read_day_flow","day_sessions","ask_memory","list_topics","read_topic","read_observation","read_review","list_meetings","read_meeting","search_meetings","meeting_context"}
             result = await session.call_tool("search_screen_memory", {"query":"alpha"})
             assert not result.isError
             assert "Milestone alpha" in str(result.content)

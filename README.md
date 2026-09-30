@@ -214,3 +214,33 @@ python windows/smoke.py
 ## License and project
 
 Released under the [MIT license](LICENSE). Third-party dependencies retain their own licenses; packaged applications include dependency notices. [Manas Vardhan](https://manasvardhan.com/) is CEO of Constant Watch.
+
+
+## Meeting context (next release)
+
+Open **Meetings** in the desktop app. When screen capture is running, Constant Watch can suggest a meeting after recognizing a supported provider and visible English in-call controls. Zoom, Google Meet, Microsoft Teams, and Webex are supported by this heuristic. A calendar event, a background call, or a translated interface may not be detected; manual recording is always available. Detection **only prompts**; it never starts recording automatically.
+
+Choose microphone, computer audio, or both; title the meeting and click **Start recording**. Computer audio includes all computer sound, not only the meeting app. Use headphones to reduce duplicate speech. Let participants know you are recording. The microphone permission is requested when you use Meetings, not during initial onboarding. Recording remains visible in the meeting panel and Mac menu bar, continues when you switch apps, and stops when you choose Stop, quit the desktop app, hit four hours, or available disk space falls below 100 MB.
+
+Download **Whisper base** once from the meeting panel (~150 MB, multilingual). It runs locally with faster-whisper on the CPU; Qwen is the separate model for screen summaries. Transcription begins after recording stops. The transcript includes timestamps and audio-source labels (Microphone / Computer audio), **not diarized or identified speakers**. Recognition can make mistakes. No live captions or automatic meeting summaries are claimed.
+
+A meeting links to screen observations whose timestamps overlap it. These are contextual links, not claims that a document was discussed. Transcripts are searchable through **Ask your day** and MCP, and included in daily Markdown in start-time order. Individual meeting files live at `meetings/<id>/transcript.md` in the app data folder. Copy Markdown from the meeting view. Delete a meeting to remove its transcript and saved audio. Meeting data follows journal retention. Audio is deleted after a successful transcript unless **Keep audio after transcription** was selected; failed or interrupted jobs keep audio for retry until deletion or retention expiry.
+
+macOS uses ScreenCaptureKit for system audio and AVAudioEngine for microphone input. Windows uses WASAPI loopback and microphone capture. The speech runtime is bundled into new desktop builds; the model is a separate explicit download. Packages containing speech dependencies exceed the former 25 MB website-asset limit and must be distributed through GitHub Releases. Existing v0.1.0 downloads predate this feature.
+
+Additional read-only MCP tools: `list_meetings`, `read_meeting` (paginated transcript), `search_meetings`, and `meeting_context` (paginated screen context). Resource: `watch://meeting/<id>`. `ask_memory` returns speech matches separately as `meeting_evidence`; screen quotes remain distinguishable from speech.
+
+### Streamlined setup
+
+The Mac flow is now **orb introduction → one setup screen → journal**. Accessibility and screen access share one checklist while model setup runs alongside it. Setup checks for an installed Qwen first and starts an installed Ollama engine when needed. If the engine is absent, the screen offers its official installer and detects it on return. The model download does not block starting the journal; screen text is retained until summaries become available. Microphone and speech-model setup remain in Meetings.
+
+### Meeting verification
+
+Run `PYTHONPATH=src .venv/bin/pytest -q` for backend tests. For a real offline speech check on macOS, first download the speech model into an isolated test folder:
+
+```sh
+PYTHONPATH=src CONSTANT_WATCH_DATA="$PWD/build/meeting-smoke" .venv/bin/python -m constant_watch.cli speech-download
+PYTHONPATH=src .venv/bin/python scripts/smoke-meetings.py
+```
+
+This synthesizes an audio fixture directly to disk, transcribes it offline, verifies timestamped passages/Markdown, and checks automatic audio deletion. It does not access the microphone or record computer sound. Pass a frozen service executable as the script's argument to verify packaged speech dependencies too. Actual microphone and loopback behavior must also be checked on a device with the relevant permissions.

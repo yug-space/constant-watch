@@ -5,14 +5,15 @@
 <dialog id="welcome-dialog" class="welcome-dialog">
   <div class="welcome-orb" aria-hidden="true"><img src="/static/brand-mark.svg" width="64" height="64" alt=""></div><p class="eyebrow">WELCOME TO CONSTANT WATCH</p><h2>A little less lost context.</h2>
   <p>Your screen becomes one private, searchable journal. Nothing is captured until you choose to start.</p>
-  <div class="welcome-steps"><p><strong>01 · Your computer. Your control.</strong><br>Visible text is read with accessibility and OCR. Password managers are excluded. Pause anytime.</p><p><strong>02 · A local model.</strong><br>Install and open Ollama, then download Qwen3.5 0.8B here. Your notes stay on this computer.</p><p><strong>03 · One continuous day.</strong><br>Start capture, switch to your work, then return to see your first moment. Closing this window stops capture.</p></div>
-  <div class="welcome-actions"><button id="install-ollama" class="secondary">Get Ollama ↗</button><button id="download-model" class="secondary">Download local model</button></div><p id="setup-model-status" class="muted" role="status"></p>
+  <div class="welcome-steps"><p><strong>Screen memory, ready when you are.</strong><br>Windows can read visible text once you start. Pause anytime or exclude apps in Capture settings.</p><p><strong>Your local model, prepared alongside you.</strong><br>We check for an existing model first and start your installed local engine. You can begin your journal while the download finishes.</p><p><strong>Meetings are always your choice.</strong><br>Record from Meetings when you need a transcript. Microphone and speech setup happen there.</p></div>
+  <div class="welcome-actions"><button id="install-ollama" class="secondary">Install local engine ↗</button><button id="download-model" class="secondary">Set up local model</button></div><p id="setup-model-status" class="muted" role="status"></p>
   <div class="welcome-actions"><button id="finish-welcome" class="primary">Start my journal →</button><button id="explore-welcome" class="text-button">Explore while paused</button></div>
 </dialog>
 <aside class="sidebar">
   <a class="brand" href="/journal" aria-label="Constant Watch home"><img src="/static/brand-mark.svg" width="34" height="34" alt=""><span>constant<span class="brand-sub">WATCH / LOCAL MEMORY</span></span></a>
   <div class="sidebar-label">WORKSPACE</div>
   <button id="all-apps" class="app-button selected"><span>Daily flow</span><span id="total-count">0</span></button>
+  <a class="app-button" href="/meetings">Meetings</a>
   <div class="sidebar-label app-heading">APPLICATIONS <span id="app-count">0</span></div>
   <nav id="apps" aria-label="Filter by application"></nav>
   <p id="no-apps" class="muted sidebar-note">Apps appear here as you work.</p>
@@ -21,6 +22,7 @@
 <main>
   <header><div class="breadcrumb">YOUR WORKSPACE <span>/</span> SCREEN MEMORY</div><div class="header-actions"><span id="live-state" class="status-pill">Connecting</span><button id="pause" class="secondary">Pause capture</button></div></header>
   <section class="intro"><div><p class="eyebrow">A RECORD OF WHAT’S ON YOUR SCREEN</p><h1>A little less<br><em>lost context.</em></h1><p class="lede">A running journal of your work, organized by app.<br>Find the detail. Pick up where you left off.</p></div><div class="flow" aria-label="Capture pipeline"><div><span class="flow-symbol">⌘</span><strong>Read</strong><small>Accessibility + OCR</small></div><i>→</i><div><span class="flow-symbol">✳</span><strong>Understand</strong><small>Local 0.8B model</small></div><i>→</i><div><span class="flow-symbol">≡</span><strong>Remember</strong><small>Markdown + MCP</small></div></div></section>
+  <section id="meeting-notice" class="notice" hidden><p id="meeting-message"></p><a href="/meetings" class="primary">Open meetings →</a></section>
   <section id="attention" class="notice" hidden><div><strong id="attention-title">Enable screen access</strong><p id="attention-text"></p></div><button id="grant" class="primary">Enable permissions</button></section>
   <div id="error" role="alert" class="notice error" hidden></div>
   <section class="journal"><div class="journal-heading"><div><p class="eyebrow">YOUR JOURNAL</p><h2 id="journal-title">All activity</h2></div><button id="export" class="secondary" disabled>Download Markdown ↗</button></div>

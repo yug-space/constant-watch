@@ -22,6 +22,8 @@ struct ModelStatus: Decodable {
     var parameterSize: String?
     var downloadBytes: Int?
     var available: Bool
+    var runtimeRunning: Bool?
+    var runtimeInstalled: Bool?
     var model: String
     var error: String?
 }
@@ -39,6 +41,7 @@ struct ServiceStatus: Decodable {
     var pendingSummaries: Int
     var dataDirectory: String
     var download: DownloadStatus?
+    var meeting: MeetingState?
 }
 
 struct DownloadStatus: Decodable {
@@ -112,6 +115,8 @@ final class WatchModel: ObservableObject {
     @Published var loading = true
     @Published var hasMore = false
     @Published var settingsPresented = false
+    @Published var meetingsPresented = false
+    @Published var meetingSelection: String?
     @Published var connected = false
     @Published var showOnboarding = false
     @Published var onboardingReplayID = UUID()
@@ -155,6 +160,7 @@ final class WatchModel: ObservableObject {
         return !status.permissions.accessibility || !status.permissions.screenRecording
     }
     var stateLabel: String {
+        if status?.meeting?.active != nil { return "Recording meeting" }
         guard connected, let status else { return "Connecting" }
         if status.settings.paused { return "Paused" }
         if permissionNeeded { return "Setup needed" }
@@ -318,6 +324,18 @@ final class WatchModel: ObservableObject {
         let id: String?
         let command: String?
         let excluded: [String]?
+        let payload: MeetingPayload?
+    }
+
+    private struct MeetingPayload: Decodable {
+        let meetingId: String?
+        let microphone: Bool?
+        let systemAudio: Bool?
+        var dictionary: [String: Any] {
+            var value: [String: Any] = [:]
+            value["meeting_id"] = meetingId; value["microphone"] = microphone; value["system_audio"] = systemAudio
+            return value
+        }
     }
 
     func startNativeBridge() {
@@ -327,7 +345,9 @@ final class WatchModel: ObservableObject {
                 do {
                     let job = try await decoded(NativeCommand.self, path: "/api/native/next")
                     guard let id = job.id, let command = job.command else { continue }
-                    let result = await CaptureCore.run(command, excluded: Set(job.excluded ?? []))
+                    let result = command.hasPrefix("meeting-")
+                        ? await MeetingRecorder.shared.command(command, payload: job.payload?.dictionary ?? [:])
+                        : await CaptureCore.run(command, excluded: Set(job.excluded ?? []))
                     let body = try JSONSerialization.data(withJSONObject: result)
                     _ = try await request("/api/native/result/\(id)", method: "POST", body: body)
                 } catch {
@@ -380,8 +400,10 @@ final class WatchModel: ObservableObject {
     }
 
     func openOllama() {
-        if let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.electron.ollama") {
-            NSWorkspace.shared.openApplication(at: url, configuration: .init())
+        let candidates = [URL(fileURLWithPath: "/Applications/Ollama.app"), FileManager.default.homeDirectoryForCurrentUser.appendingPathComponent("Applications/Ollama.app")]
+        if let installed = candidates.first(where: { FileManager.default.fileExists(atPath: $0.path) }) {
+            NSWorkspace.shared.openApplication(at: installed, configuration: .init())
+            Task { await prepareModel() }
         } else { NSWorkspace.shared.open(URL(string: "https://ollama.com/download/mac")!) }
     }
 
@@ -423,16 +445,20 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { false }
     func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
         let model = WatchModel.shared
-        model.pollTask?.cancel()
-        model.nativeTask?.cancel()
-        guard let process = model.backend, process.isRunning else { return .terminateNow }
-        process.terminate()
         Task {
-            for _ in 0..<30 {
-                if !process.isRunning { break }
-                try? await Task.sleep(for: .milliseconds(100))
+            // Keep the bridge alive until audio files are finalized and their session is saved.
+            _ = try? await model.request("/api/meetings/stop", method: "POST")
+            _ = await MeetingRecorder.shared.command("meeting-stop", payload: [:])
+            model.pollTask?.cancel()
+            model.nativeTask?.cancel()
+            if let process = model.backend, process.isRunning {
+                process.terminate()
+                for _ in 0..<50 {
+                    if !process.isRunning { break }
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+                if process.isRunning { kill(process.processIdentifier, SIGKILL) }
             }
-            if process.isRunning { kill(process.processIdentifier, SIGKILL) }
             sender.reply(toApplicationShouldTerminate: true)
         }
         return .terminateLater
@@ -447,6 +473,7 @@ struct ConstantWatchApp: App {
         Window("Constant Watch", id: "journal") {
             AppRootView().environmentObject(model).task { model.start() }
                 .preferredColorScheme(.light)
+                .sheet(isPresented: $model.meetingsPresented) { MeetingsSheet().preferredColorScheme(.light) }
                 .onOpenURL { url in
                     if url.scheme == "constantwatch" {
                         if url.host == "onboarding" { model.showOnboarding = true }
@@ -460,13 +487,14 @@ struct ConstantWatchApp: App {
         .windowStyle(.titleBar)
         .commands {
             CommandGroup(after: .appSettings) {
+                Button("Meetings…") { model.meetingsPresented = true }
                 Button("Capture settings…") { model.settingsPresented = true }.keyboardShortcut(",")
                 Button("Show notes in Finder") { model.showNotes() }
                 Button("Replay orb intro") { model.replayOrbIntro() }.keyboardShortcut("r", modifiers: [.command, .shift])
                 Button("Setup guide…") { model.showOnboarding = true }
             }
         }
-        MenuBarExtra("Constant Watch", systemImage: model.status?.settings.paused == true ? "pause.circle" : "eye.circle") {
+        MenuBarExtra("Constant Watch", systemImage: model.status?.meeting?.active != nil ? "record.circle.fill" : model.status?.settings.paused == true ? "pause.circle" : "eye.circle") {
             WatchMenu().environmentObject(model)
         }
     }
@@ -479,6 +507,10 @@ struct WatchMenu: View {
         Text(model.stateLabel)
         if let app = model.status?.lastApp { Text(app).font(.caption) }
         Divider()
+        if model.status?.meeting?.active != nil {
+            Button("Stop meeting recording") { Task { _ = try? await model.request("/api/meetings/stop", method: "POST"); await model.refresh() } }
+        }
+        Button("Meetings") { openWindow(id: "journal"); model.meetingsPresented = true; NSApp.activate(ignoringOtherApps: true) }
         Button("Open journal") { openWindow(id: "journal"); NSApp.activate(ignoringOtherApps: true) }
         Button(model.status?.settings.paused == true ? "Resume capture" : "Pause capture") { Task { await model.togglePause() } }
             .disabled(model.status == nil)

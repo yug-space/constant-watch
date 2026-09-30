@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Constant Watch — Meetings</title><link rel="stylesheet" href="/static/meetings.css"><script src="/static/meetings.js" defer></script></head>
+<body>
+<header><a href="/journal" class="back" id="back">← Daily flow</a><span class="privacy">● Saved on this computer</span></header>
+<main>
+  <div class="heading"><div><p class="eyebrow">MEETINGS</p><h1>Stay in the conversation.</h1><p class="lede">Keep the words. Find the context later.</p></div><div class="audio-mark" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+  <p id="error" class="error" role="alert" hidden></p>
+  <section id="suggestion" class="suggestion" hidden><div><strong>A meeting may be in progress</strong><p id="suggestion-title"></p></div><button id="use-detected">Prepare recording</button><button id="dismiss" class="quiet">Dismiss</button></section>
+  <section id="recording" class="recording" hidden aria-live="polite"><div class="record-light" aria-hidden="true"></div><div class="recording-title"><strong id="active-title"></strong><span>Recording audio · keep Constant Watch open</span></div><time id="timer">00:00</time><button id="stop" class="stop">■ Stop & transcribe</button></section>
+  <div class="workspace">
+    <aside>
+      <section class="recorder" id="recorder"><h2>Record a meeting</h2><p class="muted">You choose when to start and stop.</p>
+        <label class="field">Meeting title<input id="title" maxlength="200" placeholder="e.g. Product review" autocomplete="off"></label>
+        <fieldset><legend>Audio sources</legend><label class="check"><input type="checkbox" id="microphone" checked><span>Microphone<small>Your side of the conversation</small></span></label><label class="check"><input type="checkbox" id="system" checked><span>Computer audio<small>All sound from your computer</small></span></label></fieldset>
+        <button id="permission" class="link">Enable microphone access ↗</button>
+        <label class="check keep"><input type="checkbox" id="keep-audio"><span>Keep audio after transcription</span></label>
+        <p class="hint">Otherwise, audio is deleted after a successful transcript. Use headphones to reduce echo. Let everyone know you’re recording.</p>
+        <button id="start" class="primary">● Start recording</button>
+        <p id="support" class="hint"></p>
+      </section>
+      <section class="speech"><h3>Private transcription</h3><p id="model-status" role="status">Checking speech model…</p><button id="setup">Download speech model</button><p class="hint">Whisper base · multilingual · about 150 MB. One download, then transcription runs locally. Qwen continues to summarize your screen notes.</p></section>
+    </aside>
+    <section class="library"><div class="library-heading"><h2>Your meetings</h2><label class="sr-only" for="day">Filter meetings by date</label><input id="day" type="date"><button id="all-dates" class="quiet">All dates</button></div>
+      <div id="list"></div><button id="more" hidden>Load more meetings</button>
+      <div id="empty" class="empty"><div class="empty-glyph" aria-hidden="true">⌁</div><h3>The details have a place.</h3><p>Record a conversation to get a timestamped transcript, with links to the apps and documents open during it.</p></div>
+      <article id="detail" hidden><div class="detail-heading"><div><p id="detail-date" class="eyebrow"></p><h2 id="detail-title"></h2></div><button id="close-detail" class="quiet" aria-label="Close transcript">✕</button></div><p id="detail-status" role="status"></p><div class="actions"><button id="export">Copy Markdown</button><button id="retry" hidden>Retry transcription</button><button id="delete" class="danger">Delete meeting</button></div>
+      <label class="field search">Find in this transcript<input id="search" type="search" placeholder="Search a decision, name, or detail…"></label>
+      <div id="transcript"></div><p class="hint">Automatic transcript; check important details. Labels identify audio sources, not individual speakers.</p>
+      <section class="context"><h3>Screen context</h3><p class="muted">What was open during this meeting. These links don’t imply it was discussed.</p><div id="context"></div><button id="more-context" hidden>Load more context</button></section></article>
+    </section>
+  </div>
+  <footer>Detection suggests calls from Zoom, Google Meet, Teams, and Webex when their meeting controls are visible and screen capture is running. It never starts recording for you. Meetings follow your journal’s retention setting; recording stops after four hours.</footer>
+</main></body></html>

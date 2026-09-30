@@ -10,13 +10,13 @@ class NativeBridge:
         self.jobs = {}
         self.ready = asyncio.Event()
 
-    async def call(self, command="capture", excluded=None):
+    async def call(self, command="capture", excluded=None, payload=None):
         if len(self.pending) >= 32:
             raise RuntimeError("Native capture is busy. Reopen Constant Watch.")
         job_id = secrets.token_hex(16)
         future = asyncio.get_running_loop().create_future()
         self.pending[job_id] = future
-        self.jobs[job_id] = {"id": job_id, "command": command, "excluded": excluded or []}
+        self.jobs[job_id] = {"id": job_id, "command": command, "excluded": excluded or [], "payload": payload or {}}
         self.ready.set()
         try:
             return await asyncio.wait_for(future, self.timeout)

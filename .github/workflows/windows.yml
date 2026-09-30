@@ -47,7 +47,8 @@ jobs:
           & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" windows/installer.iss
           if ($LASTEXITCODE) { throw 'Installer build failed' }
           $setup = Get-Item dist/*Setup.exe
-          if ($setup.Length -gt 25MB) { throw 'Installer exceeds public hosting file limit' }
+          # Speech libraries are bundled; installers now use GitHub Releases (not the 25 MB Site asset limit).
+          if ($setup.Length -gt 500MB) { throw 'Installer unexpectedly exceeds 500 MB' }
           Get-FileHash dist/*Setup.exe -Algorithm SHA256 | Format-List
       - name: Install and verify the distributed app
         shell: pwsh
