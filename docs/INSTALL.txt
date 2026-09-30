@@ -1,11 +1,19 @@
-CONSTANT WATCH 0.1.0 — APPLE SILICON PREVIEW
+CONSTANT WATCH 0.2.0 — APPLE SILICON PREVIEW
 
 INSTALL
 1. Drag Constant Watch into Applications.
 2. Eject this disk image and open Constant Watch from Applications.
 3. Follow onboarding to enable Accessibility and Screen Recording for Constant Watch.
-4. Start Ollama. If it is not installed, the app opens its official download page.
-5. Choose Download in the local-model setup step to get Qwen 3.5 0.8B (about 1.04 GB).
+4. Setup starts an installed Ollama engine and downloads Qwen 3.5 0.8B if needed.
+   If Ollama is missing, use the official installer offered in setup, then return.
+5. Start your journal. The model download can finish in the background.
+
+MEETINGS
+Open Meetings to download the separate Whisper base speech model (~150 MB).
+Meeting detection prompts you; recording never starts automatically. Choose
+microphone, computer audio, or both, and let participants know before recording.
+Transcription runs locally after you stop. Computer audio includes all system
+sound. Audio is deleted after a successful transcript unless you choose to keep it.
 
 Requires an Apple Silicon Mac (M1 or later), macOS 14 or later, and Ollama.
 The Python runtime, service dependencies, OCR helper, and onboarding music are

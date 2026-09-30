@@ -2,6 +2,7 @@ import asyncio
 import sys
 import os
 import secrets
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from urllib.parse import urlparse
@@ -20,7 +21,15 @@ from .engine import Engine
 from .native_bridge import NativeBridge
 from .recall import Recall
 from .review import review
+from .meetings import include_meeting_evidence
 from pydantic import BaseModel, Field
+
+class MeetingStart(BaseModel):
+    title: str = Field(default='', max_length=200)
+    microphone: bool = True
+    system_audio: bool = True
+    keep_audio: bool = False
+
 
 class RecallQuestion(BaseModel):
     question: str = Field(min_length=1, max_length=500)
@@ -86,9 +95,15 @@ def create_app(root: Path | None = None, run_capture: bool = True):
             raise HTTPException(410, "Native request has expired")
         return {"accepted": True}
 
+    @app.post("/api/shutdown-workers")
+    async def shutdown_workers():
+        # The Windows owner cannot rely on TerminateProcess to run lifespan cleanup.
+        await engine.stop()
+        return {"stopped": True}
+
     @app.get("/api/health")
     async def health():
-        return {"application": "constant-watch", "version": "0.1.0"}
+        return {"application": "constant-watch", "version": "0.2.0"}
 
     @app.post("/api/open-ollama")
     async def open_ollama():
@@ -104,7 +119,7 @@ def create_app(root: Path | None = None, run_capture: bool = True):
             permissions = {"accessibility": False, "screen_recording": False, "error": str(exc)}
         return {**engine.state, "settings": engine.settings.model_dump(), "permissions": permissions,
                 "model": await engine.model.status(engine.settings.model), "pending_summaries": len(engine.store.pending()),
-                "data_directory": str(root), "platform": sys.platform,
+                "data_directory": str(root), "platform": sys.platform, "meeting": engine.meetings.status(),
                 "mcp_config": {"mcpServers": {"constant-watch": {"command": sys.executable,
                     "args": ["mcp"] if getattr(sys, "frozen", False) else ["-m", "constant_watch.cli", "mcp"],
                     "env": {"CONSTANT_WATCH_DATA": str(root)}}}}}
@@ -125,6 +140,93 @@ def create_app(root: Path | None = None, run_capture: bool = True):
     async def settings(value: Settings):
         engine.configure(value)
         return value.model_dump()
+
+    @app.get("/api/meetings/status")
+    async def meeting_status():
+        return engine.meetings.status()
+
+    @app.post("/api/meetings/dismiss")
+    async def dismiss_meeting():
+        engine.meetings.candidate = None
+        engine.meetings.dismissed_until = time.monotonic() + 300
+        return {"dismissed": True}
+
+    @app.post("/api/meetings/permission")
+    async def meeting_permission():
+        if bridge:
+            return await engine.meetings.native("meeting-permission")
+        if sys.platform == 'win32':
+            os.startfile('ms-settings:privacy-microphone')
+            return {"opened": True}
+        raise HTTPException(409, "Open the native app to enable microphone access.")
+
+    @app.post("/api/meetings/setup")
+    async def setup_speech():
+        try:
+            engine.meetings.setup()
+            return {"started": True}
+        except ValueError as exc:
+            raise HTTPException(409, str(exc)) from exc
+
+    @app.post("/api/meetings/start")
+    async def start_meeting(value: MeetingStart):
+        try:
+            return await engine.meetings.start(**value.model_dump())
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(409, str(exc)) from exc
+
+    @app.post("/api/meetings/stop")
+    async def stop_meeting():
+        try:
+            return await engine.meetings.stop()
+        except (ValueError, RuntimeError) as exc:
+            raise HTTPException(409, str(exc)) from exc
+
+    @app.get("/api/meetings")
+    async def list_meetings(day: date | None = None, offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
+        return engine.meetings.store.list(day.isoformat() if day else '', offset, limit)
+
+    def require_meeting(meeting_id):
+        try:
+            row = engine.meetings.store.get(meeting_id)
+        except ValueError as exc:
+            raise HTTPException(404, "Meeting not found") from exc
+        if not row:
+            raise HTTPException(404, "Meeting not found")
+        return row
+
+    @app.get("/api/meetings/{meeting_id}")
+    async def read_meeting(meeting_id: str):
+        return require_meeting(meeting_id)
+
+    @app.get("/api/meetings/{meeting_id}/context")
+    async def meeting_context(meeting_id: str, offset: int = Query(0, ge=0), limit: int = Query(100, ge=1, le=200)):
+        require_meeting(meeting_id)
+        return engine.meetings.store.context(meeting_id, limit, offset)
+
+    @app.get("/api/meetings/{meeting_id}/markdown")
+    async def meeting_markdown(meeting_id: str):
+        require_meeting(meeting_id)
+        return PlainTextResponse(engine.meetings.store.markdown(meeting_id),
+            headers={"Content-Disposition": 'attachment; filename="meeting-transcript.md"'})
+
+    @app.post("/api/meetings/{meeting_id}/retry")
+    async def retry_meeting(meeting_id: str):
+        row = require_meeting(meeting_id)
+        if row['status'] not in ('failed', 'interrupted'):
+            raise HTTPException(409, "Only failed or interrupted transcripts can be retried.")
+        if not row['tracks']:
+            raise HTTPException(409, "There is no recoverable audio for this meeting.")
+        engine.meetings.store.update(meeting_id, status='recorded', error='')
+        return {"queued": True}
+
+    @app.delete("/api/meetings/{meeting_id}")
+    async def delete_meeting(meeting_id: str):
+        row = require_meeting(meeting_id)
+        if row['status'] in ('recording', 'transcribing') or engine.meetings.worker_id == meeting_id:
+            raise HTTPException(409, "Stop recording or wait for transcription before deleting this meeting.")
+        engine.meetings.store.delete(meeting_id)
+        return {"deleted": True}
 
     @app.get("/api/apps")
     async def apps():
@@ -158,7 +260,8 @@ def create_app(root: Path | None = None, run_capture: bool = True):
     @app.post("/api/ask")
     async def ask(value: RecallQuestion):
         try:
-            return recall.ask(value.question, value.day, value.app_id, value.topic)
+            return include_meeting_evidence(recall.ask(value.question, value.day, value.app_id, value.topic),
+                    engine.meetings.store.search(value.question, value.day, app_id=value.app_id) if not value.topic else [])
         except ValueError as exc:
             raise HTTPException(422, str(exc)) from exc
 
@@ -183,6 +286,10 @@ def create_app(root: Path | None = None, run_capture: bool = True):
     @app.get("/")
     async def index():
         return FileResponse(static / "landing.html")
+
+    @app.get("/meetings")
+    async def meetings_page():
+        return FileResponse(static / "meetings.html")
 
     @app.get("/journal")
     async def journal():

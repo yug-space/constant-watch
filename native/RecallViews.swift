@@ -22,7 +22,15 @@ struct RecallSource: Decodable, Identifiable {
     var ocrText: String?
     var noiseRemoved: Int?
 }
+struct MeetingEvidence: Decodable {
+    var id: String
+    var title: String
+    var start: Double
+    var source: String
+    var text: String
+}
 struct RecallAnswer: Decodable {
+    var meetingEvidence: [MeetingEvidence]?
     var answer: String
     var found: Bool
     var sources: [RecallSource]
@@ -142,7 +150,7 @@ struct RecallWorkspace: View {
                         }
                     } else { topicList }
                 } else if let answer = recall.answer {
-                    if answer.found {
+                    if !answer.sources.isEmpty {
                         HStack {
                             Text("FROM YOUR CAPTURED TEXT").tracking(1.5)
                             Spacer()
@@ -151,10 +159,21 @@ struct RecallWorkspace: View {
                         ForEach(answer.sources) { source in RecallSourceCard(source: source) }
                         Text("These are source excerpts, not confirmation that a task was completed. Open the captured text to check the full context.")
                             .font(.caption).foregroundStyle(Ink.ash).lineSpacing(4)
-                    } else {
+                    } else if (answer.meetingEvidence ?? []).isEmpty {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("No supporting capture found.").font(.title3)
                             Text(answer.answer).font(.callout).foregroundStyle(Ink.ash)
+                        }.padding(24).frame(maxWidth: .infinity, alignment: .leading).background(Ink.card, in: RoundedRectangle(cornerRadius: 16))
+                    }
+                    ForEach(Array((answer.meetingEvidence ?? []).enumerated()), id: \.offset) { _, meeting in
+                        VStack(alignment: .leading, spacing: 12) {
+                            Label("MEETING TRANSCRIPT", systemImage: "waveform").font(.caption).foregroundStyle(Ink.ash)
+                            Text(meeting.title).font(.headline)
+                            Text(meeting.text).font(.callout).textSelection(.enabled)
+                            Button("Open transcript · \(Int(meeting.start) / 60):\(String(format: "%02d", Int(meeting.start) % 60)) · \(meeting.source)") {
+                                model.meetingSelection = meeting.id
+                                model.meetingsPresented = true
+                            }.buttonStyle(QuietButton())
                         }.padding(24).frame(maxWidth: .infinity, alignment: .leading).background(Ink.card, in: RoundedRectangle(cornerRadius: 16))
                     }
                 } else if !recall.loading {

@@ -32,3 +32,66 @@ async def test_model_status_reports_actual_installed_metadata():
         status = await LocalModel().status(Settings().model)
     assert status['available'] and status['parameter_size'] == '0.8B'
     assert status['download_bytes'] == 1036034688
+
+
+async def test_prepare_skips_download_when_model_is_installed(tmp_path):
+    from unittest.mock import AsyncMock
+    from constant_watch.engine import Engine
+    engine = Engine(tmp_path)
+    engine.model.status = AsyncMock(return_value={'available': True})
+    engine.model.pull = AsyncMock(side_effect=AssertionError('Downloaded an installed model'))
+    engine.model.ensure_running = AsyncMock()
+    engine.setup_model()
+    await engine.setup_task
+    assert engine.state['download']['fraction'] == 1
+    assert not engine.state['download']['running']
+    engine.model.pull.assert_not_called()
+    engine.model.ensure_running.assert_not_called()
+
+
+async def test_prepare_reports_real_failure_and_preserves_retry(tmp_path):
+    from unittest.mock import AsyncMock
+    from constant_watch.engine import Engine
+    engine = Engine(tmp_path)
+    engine.model.status = AsyncMock(return_value={'available': False})
+    engine.model.ensure_running = AsyncMock()
+    engine.model.pull = AsyncMock(side_effect=RuntimeError('Not enough disk space'))
+    engine.setup_model()
+    await engine.setup_task
+    assert engine.state['download']['status'] == 'Not enough disk space'
+    assert not engine.state['download']['running']
+    engine.model.pull = AsyncMock()
+    engine.setup_model()
+    await engine.setup_task
+    assert engine.state['download']['fraction'] == 1
+
+
+async def test_incomplete_stream_is_not_reported_as_ready():
+    client = httpx.AsyncClient(transport=httpx.MockTransport(lambda _: httpx.Response(200, content=b'{"status":"downloading","completed":50,"total":100}\n')))
+    with patch('constant_watch.model.httpx.AsyncClient', return_value=client):
+        with pytest.raises(RuntimeError, match='stopped before'):
+            await LocalModel().pull('test', lambda value: None)
+
+
+async def test_engine_already_running_is_not_started_again():
+    from unittest.mock import AsyncMock
+    model = LocalModel()
+    model.status = AsyncMock(return_value={'runtime_running': True})
+    with patch('constant_watch.model.asyncio.create_subprocess_exec', new_callable=AsyncMock) as start:
+        await model.ensure_running()
+        start.assert_not_called()
+
+
+async def test_download_http_error_is_actionable_instead_of_stuck(tmp_path):
+    from unittest.mock import AsyncMock
+    from constant_watch.engine import Engine
+    engine = Engine(tmp_path)
+    engine.model.status = AsyncMock(return_value={'available': False})
+    engine.model.ensure_running = AsyncMock()
+    client = httpx.AsyncClient(transport=httpx.MockTransport(lambda _: httpx.Response(404, json={'error': 'Model not found. Check the model name.'})))
+    with patch('constant_watch.model.httpx.AsyncClient', return_value=client):
+        engine.setup_model()
+        await engine.setup_task
+    assert not engine.state['download']['running']
+    assert '404' in engine.state['download']['status']
+    assert 'Model not found' in engine.state['download']['status']

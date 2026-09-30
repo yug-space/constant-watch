@@ -82,6 +82,17 @@ struct DayWorkspaceView: View {
                         Label(model.status?.settings.paused == true ? "Resume" : "Pause", systemImage: model.status?.settings.paused == true ? "play" : "pause")
                     }.buttonStyle(QuietButton()).disabled(model.status == nil)
                 }.padding(.horizontal, 32).padding(.vertical, 20)
+                if let meeting = model.status?.meeting, meeting.active != nil || meeting.candidate != nil {
+                    HStack(spacing: 12) {
+                        Image(systemName: meeting.active != nil ? "record.circle.fill" : "waveform").foregroundStyle(meeting.active != nil ? Color.red : Color.blue)
+                        Text(meeting.active != nil ? "Recording · " + (meeting.active?.title ?? "Meeting") : "Meeting detected · " + (meeting.candidate?.appName ?? "Call")).font(.callout)
+                        Spacer()
+                        Button(meeting.active != nil ? "Open recording" : "Review & record") { model.meetingsPresented = true }.buttonStyle(QuietButton())
+                        if meeting.active == nil {
+                            Button("Dismiss") { Task { _ = try? await model.request("/api/meetings/dismiss", method: "POST"); await model.refresh() } }.buttonStyle(QuietButton())
+                        }
+                    }.padding(.horizontal, 32).padding(.vertical, 10).background(Ink.card)
+                }
                 if section == "review" {
                     ReviewWorkspace()
                 } else if section != "journal" {
@@ -145,6 +156,7 @@ struct DayWorkspaceView: View {
             Wordmark().padding(.horizontal, 24).padding(.top, 29).padding(.bottom, 42)
             navButton("Review", icon: "sun.horizon", selected: section == "review") { section = "review" }
             navButton("Ask your day", icon: "text.bubble", selected: section == "ask") { section = "ask" }
+            navButton("Meetings", icon: "waveform", selected: false) { model.meetingsPresented = true }
             navButton("Topics", icon: "square.stack.3d.up", selected: section == "topics") { section = "topics" }
             navButton("Daily flow", icon: "point.topleft.down.to.point.bottomright.curvepath", selected: section == "journal" && model.selectedApp == nil && model.query.isEmpty) {
                 section = "journal"; model.selectedApp = nil; model.query = ""; model.useDate = true

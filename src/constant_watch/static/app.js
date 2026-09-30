@@ -12,9 +12,13 @@ function node(tag, text, className) { const n = document.createElement(tag); if(
 async function updateStatus() {
   try {
     state = await api('/api/status');
-    if(state.platform === 'win32' && !state.settings.onboarding_complete && !welcomeShown) { welcomeShown=true; $('welcome-dialog').showModal(); }
+    if(state.platform === 'win32' && !state.settings.onboarding_complete && !welcomeShown) { welcomeShown=true; $('welcome-dialog').showModal(); if(state.model.runtime_installed && !state.model.available) api('/api/model/setup',{method:'POST'}).catch(e=>error(e.message)); }
     $('setup-model-status').textContent = state.download?.running ? state.download.status : state.model.available ? 'Qwen is ready on your computer.' : state.download?.status || state.model.error;
+    $('install-ollama').hidden=state.model.runtime_installed !== false;
+    $('download-model').hidden=state.model.runtime_installed === false || state.model.available;
     $('download-model').disabled = !!state.download?.running || state.model.available;
+    $('meeting-notice').hidden=!state.meeting?.active && !state.meeting?.candidate;
+    $('meeting-message').textContent=state.meeting?.active ? `Recording meeting: ${state.meeting.active.title}` : state.meeting?.candidate ? `A meeting may be in progress: ${state.meeting.candidate.title}. Record it?` : '';
     const paused = state.settings.paused;
     const missing = !state.permissions.accessibility || !state.permissions.screen_recording;
     $('live-state').textContent = paused ? 'Paused' : missing ? 'Setup needed' : state.error ? 'Needs attention' : 'Watching locally';

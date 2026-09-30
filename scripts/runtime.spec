@@ -9,6 +9,9 @@ from PyInstaller.utils.hooks import copy_metadata
 datas = []
 binaries = []
 hiddenimports = []
+for package in ['faster_whisper', 'ctranslate2', 'av', 'onnxruntime', 'tokenizers']:
+    d, b, h = collect_all(package)
+    datas += d; binaries += b; hiddenimports += h
 datas += copy_metadata('mcp')
 datas += copy_metadata('fastapi')
 datas += copy_metadata('anyio')
@@ -59,4 +62,4 @@ coll = COLLECT(
     name='constant-watch',
 )
 
-app = BUNDLE(coll, name='Runtime.app', bundle_identifier='local.constantwatch.runtime', version='0.1.0', info_plist={'LSUIElement': True, 'LSMinimumSystemVersion': '14.0'})
+app = BUNDLE(coll, name='Runtime.app', bundle_identifier='local.constantwatch.runtime', version='0.2.0', info_plist={'LSUIElement': True, 'LSMinimumSystemVersion': '14.0'})

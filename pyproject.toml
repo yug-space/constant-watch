@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "constant-watch"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local macOS and Windows screen memory: Accessibility + OCR + a 0.8B model + MCP"
 license = "MIT"
 readme = "README.md"
 requires-python = ">=3.11"
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "httpx>=0.28,<1", "mcp>=1.20,<2"]
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.34,<1", "httpx>=0.28,<1", "mcp>=1.20,<2", "faster-whisper>=1.2,<2", "av>=16,<17", "SoundCard>=0.4.5,<1; sys_platform == 'win32'"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "pytest-asyncio>=0.25,<2"]
