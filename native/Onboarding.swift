@@ -195,7 +195,7 @@ struct OnboardingView: View {
                     Button("Retry model setup") { Task { await model.prepareModel() } }.buttonStyle(SetupButton())
                 }
             }
-            Text("Your journal works while this finishes.").font(.system(size: 11)).foregroundStyle(Ink.ash)
+            Text(model.status?.model.available == true ? "No further download needed." : "Your journal works while this finishes.").font(.system(size: 11)).foregroundStyle(Ink.ash)
         }.padding(26).frame(maxWidth: .infinity, alignment: .leading)
             .background(LinearGradient(colors: [.white, Color(red: 0.96, green: 0.98, blue: 1)], startPoint: .top, endPoint: .bottom), in: RoundedRectangle(cornerRadius: 20))
             .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.blue.opacity(0.1)))
