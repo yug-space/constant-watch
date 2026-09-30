@@ -27,7 +27,7 @@ def setup_error(exc):
     if isinstance(exc, httpx.HTTPStatusError):
         try:
             detail = exc.response.json().get('error', '')
-        except (ValueError, AttributeError):
+        except (ValueError, AttributeError, httpx.ResponseNotRead):
             detail = ''
         return f'Download failed (HTTP {exc.response.status_code}). {detail or "Check your connection and retry."}'[:300]
     return str(exc)[:300] or 'Setup did not finish. Retry to resume the download.'
@@ -70,6 +70,8 @@ class LocalModel:
     async def pull(self, model: str, progress) -> None:
         async with httpx.AsyncClient(timeout=httpx.Timeout(600, connect=5), trust_env=False) as client:
             async with client.stream("POST", OLLAMA_URL + "/api/pull", json={"model": model, "stream": True}) as response:
+                if response.is_error:
+                    await response.aread()
                 response.raise_for_status()
                 succeeded = False
                 async for line in response.aiter_lines():

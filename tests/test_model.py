@@ -80,3 +80,18 @@ async def test_engine_already_running_is_not_started_again():
     with patch('constant_watch.model.asyncio.create_subprocess_exec', new_callable=AsyncMock) as start:
         await model.ensure_running()
         start.assert_not_called()
+
+
+async def test_download_http_error_is_actionable_instead_of_stuck(tmp_path):
+    from unittest.mock import AsyncMock
+    from constant_watch.engine import Engine
+    engine = Engine(tmp_path)
+    engine.model.status = AsyncMock(return_value={'available': False})
+    engine.model.ensure_running = AsyncMock()
+    client = httpx.AsyncClient(transport=httpx.MockTransport(lambda _: httpx.Response(404, json={'error': 'Model not found. Check the model name.'})))
+    with patch('constant_watch.model.httpx.AsyncClient', return_value=client):
+        engine.setup_model()
+        await engine.setup_task
+    assert not engine.state['download']['running']
+    assert '404' in engine.state['download']['status']
+    assert 'Model not found' in engine.state['download']['status']
