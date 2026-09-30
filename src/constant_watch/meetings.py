@@ -41,7 +41,7 @@ def detect_meeting(capture):
         provider = 'Google Meet'
     elif app in ('com.cisco.webexmeetingsapp', 'windows:webexmta.exe') or host.endswith('.webex.com'):
         provider = 'Webex'
-    active = re.search(r'\b(leave call|leave meeting|end call|end meeting|hang up|leave now)\b', text)
+    active = re.search(r'\b(leave|leave call|leave meeting|end call|end meeting|hang up|leave now)\b', text)
     controls = re.search(r'\b(mute|unmute|microphone|camera)\b', text)
     if provider and active and controls:
         return {'title': redact(title)[:200] or f'{provider} meeting', 'app_id': capture.get('app_id', ''),

@@ -27,6 +27,7 @@ def transcript(store, title='Planning'):
 
 def test_detection_needs_provider_and_active_call_controls():
     assert detect_meeting(zoom())['app_name'] == 'Zoom'
+    assert detect_meeting({**zoom(), 'ax_text': 'Mute Stop video Leave'})['app_name'] == 'Zoom'
     assert detect_meeting({**zoom(), 'ax_text': 'Join meeting Camera'}) is None
     assert detect_meeting({**zoom(), 'app_id': 'com.apple.Notes'}) is None
     assert detect_meeting({**zoom(), 'app_id': 'browser', 'source_url': 'https://meet.google.com/abc-defg-hij'})
