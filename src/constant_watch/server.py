@@ -95,6 +95,12 @@ def create_app(root: Path | None = None, run_capture: bool = True):
             raise HTTPException(410, "Native request has expired")
         return {"accepted": True}
 
+    @app.post("/api/shutdown-workers")
+    async def shutdown_workers():
+        # The Windows owner cannot rely on TerminateProcess to run lifespan cleanup.
+        await engine.stop()
+        return {"stopped": True}
+
     @app.get("/api/health")
     async def health():
         return {"application": "constant-watch", "version": "0.1.0"}

@@ -400,6 +400,8 @@ class MeetingManager:
 
     async def shutdown(self):
         self.closing = True
+        async with self.lock:
+            pass  # Let an in-flight start finish before finalizing its audio.
         if self.active:
             try:
                 await self.stop()

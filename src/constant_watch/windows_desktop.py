@@ -61,7 +61,7 @@ def main():
             # TerminateProcess does not run the Python service's finally block on Windows.
             # Finalize WAV files and persist the meeting before stopping the child.
             try:
-                request = urllib.request.Request(base + '/api/meetings/stop', data=b'', method='POST', headers={'X-Constant-Watch': 'local'})
+                request = urllib.request.Request(base + '/api/shutdown-workers', data=b'', method='POST', headers={'X-Constant-Watch': 'local'})
                 with urllib.request.urlopen(request, timeout=20):
                     pass
             except OSError:
