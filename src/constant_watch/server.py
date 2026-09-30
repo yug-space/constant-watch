@@ -103,7 +103,7 @@ def create_app(root: Path | None = None, run_capture: bool = True):
 
     @app.get("/api/health")
     async def health():
-        return {"application": "constant-watch", "version": "0.1.0"}
+        return {"application": "constant-watch", "version": "0.2.0"}
 
     @app.post("/api/open-ollama")
     async def open_ollama():

@@ -62,4 +62,4 @@ coll = COLLECT(
     name='constant-watch',
 )
 
-app = BUNDLE(coll, name='Runtime.app', bundle_identifier='local.constantwatch.runtime', version='0.1.0', info_plist={'LSUIElement': True, 'LSMinimumSystemVersion': '14.0'})
+app = BUNDLE(coll, name='Runtime.app', bundle_identifier='local.constantwatch.runtime', version='0.2.0', info_plist={'LSUIElement': True, 'LSMinimumSystemVersion': '14.0'})

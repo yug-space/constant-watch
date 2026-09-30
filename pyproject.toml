@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "constant-watch"
-version = "0.1.0"
+version = "0.2.0"
 description = "Local macOS and Windows screen memory: Accessibility + OCR + a 0.8B model + MCP"
 license = "MIT"
 readme = "README.md"

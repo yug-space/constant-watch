@@ -27,7 +27,7 @@ The foreground app is sampled every 10 seconds by default. This is periodic text
 
 ## Install the packaged app
 
-Open `dist/Constant-Watch-0.1.0-macOS-arm64.dmg`, drag **Constant Watch** into **Applications**, eject the disk image, and launch the installed app. The package includes its Python interpreter and dependencies; no developer tools or source checkout are required. Apple Silicon and macOS 14+ are required. Ollama and the Qwen model are separate first-run downloads. The DMG does not enable login startup automatically.
+Open `dist/Constant-Watch-0.2.0-macOS-arm64.dmg`, drag **Constant Watch** into **Applications**, eject the disk image, and launch the installed app. The package includes its Python interpreter and dependencies; no developer tools or source checkout are required. Apple Silicon and macOS 14+ are required. Ollama and the Qwen model are separate first-run downloads. The DMG does not enable login startup automatically.
 
 The package is Developer ID signed when that identity is available. Check its release report for notarization status; signing alone is not notarization. Upgrading from a build signed with a different certificate may require granting the new app's macOS permissions again.
 
@@ -192,7 +192,7 @@ The public website source lives in `site/`, with the hosted version at https://c
 
 The Windows edition uses a native WebView2 desktop window, Microsoft UI Automation and Windows OCR, with the same Python journal, Qwen model, and read-only MCP server. Windows 11 x64 is the initial supported target. The Mac SwiftUI app remains available separately.
 
-Run `Constant-Watch-0.1.0-Windows-x64-Setup.exe`. It installs for the current user without administrator access and adds a Start menu shortcut. Python and service dependencies are bundled. Windows 11 normally includes the required Microsoft Edge WebView2 Runtime. Install and open Ollama through the setup guide, then choose **Download local model**. Choose **Start my journal** explicitly to enable capture. Closing the desktop window stops its capture service; minimize it to keep watching.
+Run `Constant-Watch-0.2.0-Windows-x64-Setup.exe`. It installs for the current user without administrator access and adds a Start menu shortcut. Python and service dependencies are bundled. Windows 11 normally includes the required Microsoft Edge WebView2 Runtime. Install and open Ollama through the setup guide, then choose **Download local model**. Choose **Start my journal** explicitly to enable capture. Closing the desktop window stops its capture service; minimize it to keep watching.
 
 Windows data lives under `%LOCALAPPDATA%\Constant Watch`. Exclusions use lowercase executable IDs such as `windows:chrome.exe` and `windows:bitwarden.exe`; the app list shows the IDs that were actually captured. Locked desktops, excluded applications, and windows with visible password controls are skipped. UI Automation privacy inspection has a node/time limit; oversized or changing trees are skipped instead of bypassing inspection. OCR operates on the visible foreground-window rectangle in memory and may include overlapping visible windows. Elevated/protected apps may be unreadable. Windows language settings must have an OCR-supported language installed; otherwise accessibility capture continues with an OCR warning.
 
